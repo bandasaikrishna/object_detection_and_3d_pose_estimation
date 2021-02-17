@@ -1,0 +1,58 @@
+<launch>
+  <arg name="serial_no"             default=""/>
+  <arg name="json_file_path"        default=""/>
+  <arg name="camera"                default="camera"/>
+  
+  <arg name="resolution"    default="qhd" />
+	<arg name="object_prefix" default="object"/>
+	<arg name="objects_path"  default=""/>
+	<arg name="gui"           default="true"/>
+	<arg name="settings_path" default="~/.ros/find_object_2d.ini"/>
+	<!--<arg name="session_path" default="$(find object_detection_with_intel_D415)/sessions/session1.bin"/> -->
+
+  <group ns="$(arg camera)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="serial_no"         value="$(arg serial_no)"/>
+      <arg name="json_file_path"    value="$(arg json_file_path)"/>
+      <arg name="depth_width"       value="640"/>
+      <arg name="depth_height"      value="480"/>
+      <arg name="depth_fps"         value="30"/>
+      <arg name="color_width"       value="640"/>
+      <arg name="color_height"      value="480"/>
+      <arg name="color_fps"         value="30"/>
+      <arg name="enable_depth"      value="true"/>
+      <arg name="enable_color"      value="true"/>
+      <arg name="enable_infra1"     value="false"/>
+      <arg name="enable_infra2"     value="false"/>
+      <arg name="enable_fisheye"    value="false"/>
+      <arg name="enable_gyro"       value="false"/>
+      <arg name="enable_accel"      value="false"/>
+      <arg name="enable_pointcloud" value="true"/>
+      <arg name="enable_sync"       value="true"/>
+      <arg name="tf_prefix"         value="$(arg camera)"/>
+    </include>
+    
+
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense2_camera)/rviz/pointcloud.rviz" required="true" />
+  </group>
+  
+  <node name="find_object_3d" pkg="find_object_2d" type="find_object_2d" output="screen">
+		<param name="gui" value="$(arg gui)" type="bool"/>
+		<param name="settings_path" value="$(arg settings_path)" type="str"/>
+		<param name="subscribe_depth" value="true" type="bool"/>
+		<param name="objects_path" value="$(arg objects_path)" type="str"/>
+		<param name="object_prefix" value="$(arg object_prefix)" type="str"/>
+		<param name="approx_sync" value="false" type="bool"/>
+		<param name="session_path" value="$(find object_detection_with_intel_D415)/sessions/session1.bin" type="str"/>
+				
+		<remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
+		<remap from="depth_registered/image_raw" to="/camera/depth/image_rect_raw"/>
+		<remap from="depth_registered/camera_info" to="/camera/depth/camera_info"/>
+	</node>
+	
+	<node name="tf_example" pkg="find_object_2d" type="tf_example" output="screen">
+	    <param name="map_frame_id" value="/camera" type="str"/>
+		<param name="object_prefix" value="$(arg object_prefix)" type="str"/>
+	</node>
+</launch>
